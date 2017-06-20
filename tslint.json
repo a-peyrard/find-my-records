@@ -5,7 +5,11 @@
     ],
     "jsRules": {},
     "rules": {
-        "no-console": false
+        "no-console": false,
+        "ordered-imports": false,
+        "trailing-comma": false,
+        "member-ordering": false,
+        "arrow-parens": [true, "ban-single-arg-parens"]
     },
     "rulesDirectory": []
 }

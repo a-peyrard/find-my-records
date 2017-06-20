@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="Sample" version="1.1"
+  xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/11.xsd"
+  xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <time>2017-06-19T01:21:45.000Z</time>
+  </metadata>
+  <trk>
+    <name>San Francisco Running</name>
+    <type>running</type>
+    <trkseg>
+      <trkpt lat="37.74459670297801494598388671875" lon="-122.41834281943738460540771484375">
+        <ele>55</ele>
+        <time>2017-06-19T01:21:45.000Z</time>
+      </trkpt>
+      <trkpt lat="37.7444564737379550933837890625" lon="-122.41845077835023403167724609375">
+        <ele>57.40000152587890625</ele>
+        <time>2017-06-19T01:21:54.000Z</time>
+      </trkpt>
+      <trkpt lat="37.7444301545619964599609375" lon="-122.41847123019397258758544921875">
+        <ele>57.799999237060546875</ele>
+        <time>2017-06-19T01:21:56.000Z</time>
+      </trkpt>
+      <trkpt lat="37.74441615678369998931884765625" lon="-122.41847860626876354217529296875">
+        <ele>58.200000762939453125</ele>
+        <time>2017-06-19T01:21:57.000Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

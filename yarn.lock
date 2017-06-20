@@ -33,9 +33,43 @@
   dependencies:
     "@types/babel-types" "*"
 
+"@types/geolib@^2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@types/geolib/-/geolib-2.0.2.tgz#1f09134a427100f651dce4b49decdc1d2848ee01"
+
+"@types/immutable@^3.8.7":
+  version "3.8.7"
+  resolved "https://registry.yarnpkg.com/@types/immutable/-/immutable-3.8.7.tgz#536d33d30f3f3d9a6d4642a219419fd82af633fb"
+  dependencies:
+    immutable "*"
+
 "@types/jest@^20.0.1":
   version "20.0.1"
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-20.0.1.tgz#8643a195d925a00f7bdee5257d12c3aac743f3b4"
+
+"@types/moment@^2.13.0":
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/@types/moment/-/moment-2.13.0.tgz#604ebd189bc3bc34a1548689404e61a2a4aac896"
+  dependencies:
+    moment "*"
+
+"@types/node@*", "@types/node@^8.0.0":
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.1.tgz#89c271e0c3b9ebb6a3756dd601336970b6228b77"
+
+"@types/pify@^0.0.28":
+  version "0.0.28"
+  resolved "https://registry.yarnpkg.com/@types/pify/-/pify-0.0.28.tgz#682b6c33a1d05748b86f029bdab6f62aa73ff506"
+
+"@types/sax@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@types/sax/-/sax-1.0.0.tgz#30d5e6bdbf126daf6e412c639251dd974bd47cdc"
+  dependencies:
+    "@types/node" "*"
+
+"@types/xml2js@^0.0.33":
+  version "0.0.33"
+  resolved "https://registry.yarnpkg.com/@types/xml2js/-/xml2js-0.0.33.tgz#20c5dd6460245284d64a55690015b95e409fb7de"
 
 abab@^1.0.3:
   version "1.0.3"
@@ -719,6 +753,10 @@ fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
 
+geolib@^2.0.22:
+  version "2.0.22"
+  resolved "https://registry.yarnpkg.com/geolib/-/geolib-2.0.22.tgz#d74e96ebea2e0049ef48077c1cd1214063e27200"
+
 get-caller-file@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-1.0.2.tgz#f702e63127e7e231c160a80c1554acb70d5047e5"
@@ -848,6 +886,10 @@ http-signature@~1.1.0:
 iconv-lite@0.4.13:
   version "0.4.13"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.13.tgz#1f88aba4ab0b1508e8312acc39345f36e992e2f2"
+
+immutable@*, immutable@^3.8.1:
+  version "3.8.1"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-3.8.1.tgz#200807f11ab0f72710ea485542de088075f68cd2"
 
 inflight@^1.0.4:
   version "1.0.6"
@@ -1393,7 +1435,7 @@ locate-path@^2.0.0:
     p-locate "^2.0.0"
     path-exists "^3.0.0"
 
-lodash@^4.14.0, lodash@^4.2.0:
+lodash@^4.0.0, lodash@^4.14.0, lodash@^4.2.0:
   version "4.17.4"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
 
@@ -1481,6 +1523,10 @@ mkdirp@^0.5.1:
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.1.tgz#30057438eac6cf7f8c4767f38648d6697d75c903"
   dependencies:
     minimist "0.0.8"
+
+moment@*, moment@^2.18.1:
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.18.1.tgz#c36193dd3ce1c2eed2adb7c802dbbc77a81b1c0f"
 
 ms@2.0.0:
   version "2.0.0"
@@ -1674,6 +1720,10 @@ pify@^2.0.0, pify@^2.3.0:
   version "2.3.0"
   resolved "https://registry.yarnpkg.com/pify/-/pify-2.3.0.tgz#ed141a6ac043a849ea588498e7dca8b15330e90c"
 
+pify@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/pify/-/pify-3.0.0.tgz#e5a4acd2c101fdf3d9a4d07f0dbc4db49dd28176"
+
 pinkie-promise@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/pinkie-promise/-/pinkie-promise-2.0.1.tgz#2135d6dfa7a358c069ac9b178776288228450ffa"
@@ -1864,7 +1914,7 @@ sane@~1.6.0:
     walker "~1.0.5"
     watch "~0.10.0"
 
-sax@^1.2.1:
+sax@>=0.6.0, sax@^1.2.1, sax@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.2.tgz#fd8631a23bc7826bef5d871bdb87378c95647828"
 
@@ -2230,6 +2280,19 @@ wrappy@1:
 xml-name-validator@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/xml-name-validator/-/xml-name-validator-2.0.1.tgz#4d8b8f1eccd3419aa362061becef515e1e559635"
+
+xml2js@^0.4.17:
+  version "0.4.17"
+  resolved "https://registry.yarnpkg.com/xml2js/-/xml2js-0.4.17.tgz#17be93eaae3f3b779359c795b419705a8817e868"
+  dependencies:
+    sax ">=0.6.0"
+    xmlbuilder "^4.1.0"
+
+xmlbuilder@^4.1.0:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-4.2.1.tgz#aa58a3041a066f90eaa16c2f5389ff19f3f461a5"
+  dependencies:
+    lodash "^4.0.0"
 
 "xtend@>=4.0.0 <4.1.0-0":
   version "4.0.1"
