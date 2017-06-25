@@ -8,11 +8,16 @@ if (process.argv.length < 3) {
     process.exit(1);
 }
 
-parse(process.argv[2])
-    .then(printRunRecords)
+const filePath = process.argv[2];
+parse(filePath)
     .catch(error => {
-        console.log(error.stack || error);
-    });
+        throw new Error(
+            "[ERROR]: Unable to parse the gpx file: " + filePath + ", check that file is a regular gpx file!\n" +
+            error.message || error
+        );
+    })
+    .then(printRunRecords)
+    .catch(error => console.log(error.message || error));
 
 function printRunRecords(run: Run) {
     console.log("=> RUN: '" + run.label + "' (" + run.date + ")");
