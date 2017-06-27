@@ -1,64 +1,54 @@
 #!/usr/bin/env node
-import parse from "./gpx/Parser";
-import { Records, Record } from "./record/Records";
-import { Run } from "./domain/Run";
-import * as moment from "moment";
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const Parser_1 = require("./gpx/Parser");
+const Records_1 = require("./record/Records");
+const moment = require("moment");
 if (process.argv.length < 3) {
     console.error("enter the path to a gpx file!");
     process.exit(1);
 }
-
 const filePath = process.argv[2];
-parse(filePath)
+Parser_1.default(filePath)
     .catch(error => {
-        throw new Error(
-            "[ERROR]: Unable to parse the gpx file: " + filePath + ", check that file is a regular gpx file!\n" +
-            error.message || error
-        );
-    })
+    throw new Error("[ERROR]: Unable to parse the gpx file: " + filePath + ", check that file is a regular gpx file!\n" +
+        error.message || error);
+})
     .then(printRunRecords)
     .catch(error => console.log(error.message || error));
-
-function printRunRecords(run: Run) {
+function printRunRecords(run) {
     console.log("=> RUN: '" + run.label + "' (" + run.date + ")");
-
     console.log(" * measured positions: " + run.positions.size);
     console.log(" * mean distance between position: " + (run.positions.last().distance / run.positions.size) + "m");
-
-    const records = Records.from(run.positions)
-                           .distance(100)
-                           .distance(200)
-                           .distance(400)
-                           .distance(1000)
-                           .distance(1609) // miles (crazy unit)
-                           .distance(5000)
-                           .distance(10000)
-                           .distance(15000)
-                           .distance(21097) // half
-                           .extract();
+    const records = Records_1.Records.from(run.positions)
+        .distance(100)
+        .distance(200)
+        .distance(400)
+        .distance(1000)
+        .distance(1609) // miles (crazy unit)
+        .distance(5000)
+        .distance(10000)
+        .distance(15000)
+        .distance(21097) // half
+        .extract();
     if (records.isEmpty()) {
         console.log("no records found 😢");
     }
     records.sort((r1, r2) => r1.distance - r2.distance)
-           .forEach(printRecord);
+        .forEach(printRecord);
 }
-
-function printRecord(record: Record) {
+function printRecord(record) {
     console.log("\t- 🎉 record for " + record.distance + "m in " +
         secondToHuman(record.time) +
         " (real measured distance: " + record.measuredDistance +
         ", measured after " + record.startingPosition.distance + "m)");
 }
-
-function secondToHuman(rawSeconds: number): string {
+function secondToHuman(rawSeconds) {
     const duration = moment.duration(rawSeconds, "second");
-
     let res = "";
     const hours = duration.hours();
     const minutes = duration.minutes();
     const seconds = duration.seconds();
-
     let display = false;
     if (hours > 0) {
         res += hours + "h";
@@ -69,10 +59,10 @@ function secondToHuman(rawSeconds: number): string {
     }
     return res + pad2(seconds) + "s";
 }
-
-function pad2(n: number) {
+function pad2(n) {
     if (n < 10) {
         return "0" + n;
     }
     return n;
 }
+//# sourceMappingURL=index.js.map

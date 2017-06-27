@@ -11,7 +11,7 @@ I didn't manage to find an app to extract this kind of statistics, I just made o
 This is my first time playing with `typescript`, so it's also some sort of kata.
 So I will enjoy some reviewing! I have a long `java` background, so I guess I'm influenced by it. 
 
-## How to run (coming soon, currently it has to be run from sources)
+## How to run
 It requires `npm` and `node`.
 ```
 $ npm install -g find-my-records
