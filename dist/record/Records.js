@@ -16,11 +16,11 @@ class Records {
         if (this.distances.isEmpty()) {
             throw new Error("unable to calculate any record, there is no specified distances!");
         }
-        const trackers = immutable_1.Map().withMutations(mutable => this.distances.forEach(distance => mutable.set(distance, new Tracker(distance))));
-        this.positions.forEach(position => trackers.forEach(tracker => tracker.track(position)));
+        const trackers = immutable_1.Map().withMutations(mutable => this.distances.forEach((distance) => mutable.set(distance, new Tracker(distance))));
+        this.positions.forEach((position) => trackers.forEach((tracker) => tracker.track(position)));
         return trackers.toSeq()
-            .filter(tracker => tracker.hasRecord())
-            .map(tracker => tracker.getRecord())
+            .filter((tracker) => tracker.hasRecord())
+            .map((tracker) => tracker.getRecord())
             .toMap();
     }
 }

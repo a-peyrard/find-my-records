@@ -18,14 +18,18 @@ export class Records {
             throw new Error("unable to calculate any record, there is no specified distances!");
         }
         const trackers = Map<number, Tracker>().withMutations(
-            mutable => this.distances.forEach(distance => mutable.set(distance, new Tracker(distance)))
+            mutable => this.distances.forEach(
+                (distance: number) => mutable.set(distance, new Tracker(distance))
+            )
         );
         this.positions.forEach(
-            position => trackers.forEach(tracker => tracker.track(position))
+            (position: Position) => trackers.forEach(
+                (tracker: Tracker) => tracker.track(position)
+            )
         );
         return trackers.toSeq()
-                       .filter(tracker => tracker.hasRecord())
-                       .map(tracker => tracker.getRecord())
+                       .filter((tracker: Tracker) => tracker.hasRecord())
+                       .map((tracker: Tracker) => tracker.getRecord())
                        .toMap();
     }
 }
