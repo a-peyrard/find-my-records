@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const Position_1 = require("../domain/Position");
 const immutable_1 = require("immutable");
+const stream_1 = require("stream");
+const Types_1 = require("../util/Types");
 class Records {
     constructor(positions, distances) {
         this.positions = positions;
@@ -16,21 +19,48 @@ class Records {
         if (this.distances.isEmpty()) {
             throw new Error("unable to calculate any record, there is no specified distances!");
         }
-        const trackers = immutable_1.Map().withMutations(mutable => this.distances.forEach((distance) => mutable.set(distance, new Tracker(distance))));
-        this.positions.forEach((position) => trackers.forEach((tracker) => tracker.track(position)));
-        return trackers.toSeq()
+        const findRecords = new FindRecordsStream(this.distances);
+        this.positions.forEach(position => findRecords.write(position));
+        return findRecords.extractBests();
+    }
+}
+exports.Records = Records;
+class FindRecordsStream extends stream_1.Transform {
+    constructor(distances, options) {
+        super(Object.assign({}, options, { objectMode: true }));
+        this.distances = distances;
+        this.trackers = immutable_1.Map().withMutations(mutable => this.distances.forEach((distance) => mutable.set(distance, new Tracker(distance))));
+    }
+    _transform(chunk, encoding, callback) {
+        const position = Position_1.Position.checkInstanceOf(chunk);
+        this.trackers.forEach((tracker) => {
+            const newRecord = tracker.track(position);
+            if (newRecord) {
+                this.push(newRecord);
+            }
+        });
+        callback();
+    }
+    extractBests() {
+        return this.trackers.toSeq()
             .filter((tracker) => tracker.hasRecord())
             .map((tracker) => tracker.getRecord())
             .toMap();
     }
 }
-exports.Records = Records;
+exports.FindRecordsStream = FindRecordsStream;
 class Record {
     constructor(distance, time, startingPosition, measuredDistance) {
         this.distance = distance;
         this.time = time;
         this.startingPosition = startingPosition;
         this.measuredDistance = measuredDistance;
+    }
+    static checkInstanceOf(chunk) {
+        if (chunk instanceof Record) {
+            return chunk;
+        }
+        throw new Types_1.WrongTypeException("Record", chunk);
     }
     isBetterThan(other) {
         if (!other) {
@@ -61,16 +91,18 @@ class Tracker {
         return this.best;
     }
     track(position) {
+        let newRecord;
         this.queue.push(position);
         while (this.queueDistance() >= this.distance) {
             const cur = this.extractRecord();
             if (cur.isBetterThan(this.best)) {
                 this.best = cur;
+                newRecord = cur;
             }
             // move the window
             this.queue.shift();
         }
-        return this;
+        return newRecord;
     }
     queueDistance() {
         return this.tail().distance - this.head().distance;

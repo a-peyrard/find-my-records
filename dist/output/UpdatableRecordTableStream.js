@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const stream_1 = require("stream");
 const Records_1 = require("../record/Records");
-const Types_1 = require("../util/Types");
 const Position_1 = require("../domain/Position");
 const ConsoleUpdatableRecordTable_1 = require("./console/ConsoleUpdatableRecordTable");
 /**
@@ -15,18 +14,12 @@ class UpdatableRecordTableStream extends stream_1.Writable {
         this.table.init();
     }
     _write(chunk, encoding, callback) {
-        this.table.append(UpdatableRecordTableStream.checkInstanceOfRecord(chunk));
+        this.table.append(Records_1.Record.checkInstanceOf(chunk));
         callback();
     }
     _final(callback) {
         this.table.seal();
         callback();
-    }
-    static checkInstanceOfRecord(chunk) {
-        if (chunk instanceof Records_1.Record) {
-            return chunk;
-        }
-        throw new Types_1.WrongTypeException("Record", chunk);
     }
 }
 // fixme dummy test, hard to make some unit tests :/

@@ -1,5 +1,7 @@
 import { Position } from "../domain/Position";
 import { List, Map } from "immutable";
+import { Transform, TransformOptions } from "stream";
+import { WrongTypeException } from "../util/Types";
 
 export class Records {
     public static from(positions: List<Position>) {
@@ -17,24 +19,52 @@ export class Records {
         if (this.distances.isEmpty()) {
             throw new Error("unable to calculate any record, there is no specified distances!");
         }
-        const trackers = Map<number, Tracker>().withMutations(
+        const findRecords = new FindRecordsStream(this.distances);
+        this.positions.forEach(position => findRecords.write(position));
+        return findRecords.extractBests();
+    }
+}
+
+export class FindRecordsStream extends Transform {
+    private readonly trackers: Map<number, Tracker>;
+
+    constructor(readonly distances: List<number>, options?: TransformOptions) {
+        super({ ...options, objectMode: true });
+
+        this.trackers = Map<number, Tracker>().withMutations(
             mutable => this.distances.forEach(
                 (distance: number) => mutable.set(distance, new Tracker(distance))
             )
         );
-        this.positions.forEach(
-            (position: Position) => trackers.forEach(
-                (tracker: Tracker) => tracker.track(position)
-            )
-        );
-        return trackers.toSeq()
-                       .filter((tracker: Tracker) => tracker.hasRecord())
-                       .map((tracker: Tracker) => tracker.getRecord())
-                       .toMap();
+    }
+
+    public _transform(chunk: any, encoding: string, callback: (error?: Error, data?: any) => void): void {
+        const position = Position.checkInstanceOf(chunk);
+        this.trackers.forEach((tracker: Tracker) => {
+            const newRecord = tracker.track(position);
+            if (newRecord) {
+                this.push(newRecord);
+            }
+        });
+        callback();
+    }
+
+    public extractBests(): Map<number, Record> {
+        return this.trackers.toSeq()
+                   .filter((tracker: Tracker) => tracker.hasRecord())
+                   .map((tracker: Tracker) => tracker.getRecord())
+                   .toMap();
     }
 }
 
 export class Record {
+    public static checkInstanceOf(chunk: any): Record {
+        if (chunk instanceof Record) {
+            return chunk as Record;
+        }
+        throw new WrongTypeException("Record", chunk);
+    }
+
     public constructor(public readonly distance: number,
                        public readonly time: number,
                        public readonly startingPosition: Position,
@@ -72,17 +102,21 @@ class Tracker {
         return this.best;
     }
 
-    public track(position: Position): Tracker {
+    public track(position: Position): Record | undefined {
+        let newRecord;
+
         this.queue.push(position);
         while (this.queueDistance() >= this.distance) {
             const cur = this.extractRecord();
             if (cur.isBetterThan(this.best)) {
                 this.best = cur;
+                newRecord = cur;
             }
             // move the window
             this.queue.shift();
         }
-        return this;
+
+        return newRecord;
     }
 
     private queueDistance() {

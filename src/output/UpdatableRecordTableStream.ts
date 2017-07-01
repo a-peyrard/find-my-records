@@ -16,20 +16,13 @@ class UpdatableRecordTableStream extends Writable {
     }
 
     public _write(chunk: any, encoding: string, callback: (error?: Error) => void): void {
-        this.table.append(UpdatableRecordTableStream.checkInstanceOfRecord(chunk));
+        this.table.append(Record.checkInstanceOf(chunk));
         callback();
     }
 
     public _final(callback: (error?: Error) => void): void {
         this.table.seal();
         callback();
-    }
-
-    private static checkInstanceOfRecord(chunk: any): Record {
-        if (chunk instanceof Record) {
-            return chunk as Record;
-        }
-        throw new WrongTypeException("Record", chunk);
     }
 }
 
