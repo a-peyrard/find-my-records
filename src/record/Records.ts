@@ -1,6 +1,6 @@
 import { Position } from "../domain/Position";
 import { List, Map } from "immutable";
-import { Transform, TransformOptions } from "stream";
+import { Transform, TransformOptions, Writable, WritableOptions } from "stream";
 import { WrongTypeException } from "../util/Types";
 
 export class Records {
@@ -20,8 +20,10 @@ export class Records {
             throw new Error("unable to calculate any record, there is no specified distances!");
         }
         const findRecords = new FindRecordsStream(this.distances);
+        const collector = new RecordsCollector();
+        findRecords.pipe(collector);
         this.positions.forEach(position => findRecords.write(position));
-        return findRecords.extractBests();
+        return collector.extractBests();
     }
 }
 
@@ -48,12 +50,23 @@ export class FindRecordsStream extends Transform {
         });
         callback();
     }
+}
+
+class RecordsCollector extends Writable {
+    private readonly records: Map<number, Record> = Map<number, Record>().asMutable();
+
+    constructor(options?: WritableOptions) {
+        super({ ...options, objectMode: true });
+    }
+
+    public _write(chunk: any, encoding: string, done: (error?: Error) => void): void {
+        const record = Record.checkInstanceOf(chunk);
+        this.records.set(record.distance, record);
+        done();
+    }
 
     public extractBests(): Map<number, Record> {
-        return this.trackers.toSeq()
-                   .filter((tracker: Tracker) => tracker.hasRecord())
-                   .map((tracker: Tracker) => tracker.getRecord())
-                   .toMap();
+        return this.records.asImmutable();
     }
 }
 
@@ -93,14 +106,6 @@ class Tracker {
     private queue: Position[] = [];
 
     public constructor(private readonly distance: number) {}
-
-    public hasRecord() {
-        return this.best !== undefined;
-    }
-
-    public getRecord(): Record {
-        return this.best;
-    }
 
     public track(position: Position): Record | undefined {
         let newRecord;

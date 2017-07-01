@@ -20,8 +20,10 @@ class Records {
             throw new Error("unable to calculate any record, there is no specified distances!");
         }
         const findRecords = new FindRecordsStream(this.distances);
+        const collector = new RecordsCollector();
+        findRecords.pipe(collector);
         this.positions.forEach(position => findRecords.write(position));
-        return findRecords.extractBests();
+        return collector.extractBests();
     }
 }
 exports.Records = Records;
@@ -41,14 +43,22 @@ class FindRecordsStream extends stream_1.Transform {
         });
         callback();
     }
-    extractBests() {
-        return this.trackers.toSeq()
-            .filter((tracker) => tracker.hasRecord())
-            .map((tracker) => tracker.getRecord())
-            .toMap();
-    }
 }
 exports.FindRecordsStream = FindRecordsStream;
+class RecordsCollector extends stream_1.Writable {
+    constructor(options) {
+        super(Object.assign({}, options, { objectMode: true }));
+        this.records = immutable_1.Map().asMutable();
+    }
+    _write(chunk, encoding, done) {
+        const record = Record.checkInstanceOf(chunk);
+        this.records.set(record.distance, record);
+        done();
+    }
+    extractBests() {
+        return this.records.asImmutable();
+    }
+}
 class Record {
     constructor(distance, time, startingPosition, measuredDistance) {
         this.distance = distance;
@@ -83,12 +93,6 @@ class Tracker {
     constructor(distance) {
         this.distance = distance;
         this.queue = [];
-    }
-    hasRecord() {
-        return this.best !== undefined;
-    }
-    getRecord() {
-        return this.best;
     }
     track(position) {
         let newRecord;
