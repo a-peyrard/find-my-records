@@ -10,7 +10,8 @@
         "trailing-comma": false,
         "member-ordering": false,
         "arrow-parens": [true, "ban-single-arg-parens"],
-        "max-classes-per-file": false
+        "max-classes-per-file": false,
+        "interface-name": false
     },
     "rulesDirectory": []
 }

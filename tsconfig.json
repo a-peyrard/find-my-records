@@ -11,5 +11,7 @@
     "node_modules",
     "dist",
     "./src/**/__tests__/*.ts"
-  ]
+  ],
+  "baseUrl": "types",
+  "typeRoots": ["types"]
 }
