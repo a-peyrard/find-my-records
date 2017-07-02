@@ -30,22 +30,27 @@ const meta = new Run.Meta("dummy", new Date());
 const stream = new UpdatableRecordTableStream(new ConsoleUpdatableRecordTable([100, 200, 400, 1000, 10000]));
 for (let i = 0; i < 10; i ++) {
     setTimeout(
-        () => stream.write(new Record(200, Math.random(), new Run.Position(meta, 0, 0), 1000)),
+        () => stream.write(new Record(200, generateFakeTime(), new Run.Position(meta, 0, 0), 1000)),
         (i * 1000) + 400
     );
     setTimeout(
-        () => stream.write(new Record(100, Math.random(), new Run.Position(meta, 0, 0), 1000)),
+        () => stream.write(new Record(100, generateFakeTime(), new Run.Position(meta, 0, 0), 1000)),
         (i * 1000) + 200
     );
     setTimeout(
-        () => stream.write(new Record(1000, Math.random(), new Run.Position(meta, 0, 0), 1000)),
+        () => stream.write(new Record(1000, generateFakeTime(), new Run.Position(meta, 0, 0), 1000)),
         (i * 1000) + 1000
     );
     setTimeout(
-        () => stream.write(new Record(400, Math.random(), new Run.Position(meta, 0, 0), 1000)),
+        () => stream.write(new Record(400, generateFakeTime(), new Run.Position(meta, 0, 0), 1000)),
         (i * 1000) + 500
     );
 }
+
+function generateFakeTime() {
+    return Math.floor(Math.random() * 10000);
+}
+
 setTimeout(
     () => stream.end(),
     12000

@@ -1,7 +1,10 @@
 import { UpdatableRecordTable } from "../UpdatableRecordTable";
 import { Record } from "../../record/Records";
 import * as readline from "readline";
+import { sprintf } from "sprintf-js";
 import Socket = NodeJS.Socket;
+import * as moment from "moment";
+import { secondToHuman } from "../../util/Time";
 
 export class ConsoleUpdatableRecordTable implements UpdatableRecordTable {
 
@@ -26,9 +29,26 @@ export class ConsoleUpdatableRecordTable implements UpdatableRecordTable {
     }
 
     private printRecord(distance: number, record?: Record) {
-        const buffer = ` -> ${distance} = ${record ? record!.time : ""}`;
-        this.out.write(buffer);
+        this.out.write(sprintf(
+            " %s %-6s = %s",
+            record ? "🎉" : "-",
+            distance,
+            this.formatRecord(record)
+        ));
+        readline.clearLine(this.out, 1);
         readline.cursorTo(this.out, 0); // always keep cursor at x position 0
+    }
+
+    private formatRecord(record?: Record) {
+        if (record) {
+            return sprintf(
+                "%-15s 🏃  %-20s - %s",
+                secondToHuman(record!.time),
+                moment(record!.runMeta.date).format("dddd, MMMM Do YYYY @ HH:mm:ss"),
+                record!.runMeta.label,
+            );
+        }
+        return "(no record)";
     }
 
     private writeRecordToLine(line: number, record: Record) {

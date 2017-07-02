@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import parse from "./gpx/Parser";
-import { Records, Record } from "./record/Records";
+import { Record, Records } from "./record/Records";
 import { Run } from "./domain/Run";
-import * as moment from "moment";
+import { secondToHuman } from "./util/Time";
 
 if (process.argv.length < 3) {
     console.error("enter the path to a gpx file!");
@@ -49,30 +49,4 @@ function printRecord(record: Record) {
         secondToHuman(record.time) +
         " (real measured distance: " + record.measuredDistance +
         ", measured after " + record.startingPosition.distance + "m)");
-}
-
-function secondToHuman(rawSeconds: number): string {
-    const duration = moment.duration(rawSeconds, "second");
-
-    let res = "";
-    const hours = duration.hours();
-    const minutes = duration.minutes();
-    const seconds = duration.seconds();
-
-    let display = false;
-    if (hours > 0) {
-        res += hours + "h";
-        display = true;
-    }
-    if (display || minutes > 0) {
-        res += pad2(minutes) + "m";
-    }
-    return res + pad2(seconds) + "s";
-}
-
-function pad2(n: number) {
-    if (n < 10) {
-        return "0" + n;
-    }
-    return n;
 }

@@ -67,6 +67,10 @@
   dependencies:
     "@types/node" "*"
 
+"@types/sprintf-js@^0.0.27":
+  version "0.0.27"
+  resolved "https://registry.yarnpkg.com/@types/sprintf-js/-/sprintf-js-0.0.27.tgz#aa82c1ed9a068d367ca128918561b348bd30fa1a"
+
 "@types/uuid@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-3.0.0.tgz#be93b14bcf97f59c079a9e58754960b5efd946c3"
@@ -1989,6 +1993,10 @@ spdx-expression-parse@~1.0.0:
 spdx-license-ids@^1.0.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/spdx-license-ids/-/spdx-license-ids-1.2.2.tgz#c9df7a3424594ade6bd11900d596696dc06bac57"
+
+sprintf-js@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.1.1.tgz#36be78320afe5801f6cea3ee78b6e5aab940ea0c"
 
 sprintf-js@~1.0.2:
   version "1.0.3"
