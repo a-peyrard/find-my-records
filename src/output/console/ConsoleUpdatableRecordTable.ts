@@ -8,15 +8,16 @@ import { secondToHuman } from "../../util/Time";
 
 export class ConsoleUpdatableRecordTable implements UpdatableRecordTable {
 
+    private readonly lastLineIndex: number;
     private readonly records: Map<number, Record | undefined> = new Map();
 
     constructor(readonly distances: number[], readonly out: Socket = process.stdout) {
         this.distances.forEach(distance => this.records.set(distance, undefined));
+        this.lastLineIndex = this.distances.length;
     }
 
     public init() {
         this.printTable();
-        readline.moveCursor(this.out, 0, -this.distances.length); // put back cursor at position (0, 0)
 
         return this;
     }
@@ -52,9 +53,10 @@ export class ConsoleUpdatableRecordTable implements UpdatableRecordTable {
     }
 
     private writeRecordToLine(line: number, record: Record) {
-        readline.moveCursor(this.out, 0, line);
+        const lineDistance = this.lastLineIndex - line;
+        readline.moveCursor(this.out, 0, -lineDistance);
         this.printRecord(record.distance, record);
-        readline.moveCursor(this.out, 0, -line); // put back cursor at position (0, 0)
+        readline.moveCursor(this.out, 0, lineDistance); // put back cursor at position (0, 0)
     }
 
     public append(record: Record): ConsoleUpdatableRecordTable {
@@ -68,6 +70,7 @@ export class ConsoleUpdatableRecordTable implements UpdatableRecordTable {
     }
 
     public seal() {
+        readline.moveCursor(this.out, 0, -this.lastLineIndex);
         this.printTable();
     }
 }

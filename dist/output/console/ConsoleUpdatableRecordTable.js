@@ -10,10 +10,10 @@ class ConsoleUpdatableRecordTable {
         this.out = out;
         this.records = new Map();
         this.distances.forEach(distance => this.records.set(distance, undefined));
+        this.lastLineIndex = this.distances.length;
     }
     init() {
         this.printTable();
-        readline.moveCursor(this.out, 0, -this.distances.length); // put back cursor at position (0, 0)
         return this;
     }
     printTable() {
@@ -34,9 +34,10 @@ class ConsoleUpdatableRecordTable {
         return "(no record)";
     }
     writeRecordToLine(line, record) {
-        readline.moveCursor(this.out, 0, line);
+        const lineDistance = this.lastLineIndex - line;
+        readline.moveCursor(this.out, 0, -lineDistance);
         this.printRecord(record.distance, record);
-        readline.moveCursor(this.out, 0, -line); // put back cursor at position (0, 0)
+        readline.moveCursor(this.out, 0, lineDistance); // put back cursor at position (0, 0)
     }
     append(record) {
         const index = this.distances.indexOf(record.distance);
@@ -47,6 +48,7 @@ class ConsoleUpdatableRecordTable {
         return this;
     }
     seal() {
+        readline.moveCursor(this.out, 0, -this.lastLineIndex);
         this.printTable();
     }
 }
