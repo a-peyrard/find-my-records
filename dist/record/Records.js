@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Position_1 = require("../domain/Position");
+const Run_1 = require("../domain/Run");
 const immutable_1 = require("immutable");
 const stream_1 = require("stream");
 const Types_1 = require("../util/Types");
@@ -34,7 +34,7 @@ class FindRecordsStream extends stream_1.Transform {
         this.trackers = immutable_1.Map().withMutations(mutable => this.distances.forEach((distance) => mutable.set(distance, new Tracker(distance))));
     }
     _transform(chunk, encoding, callback) {
-        const position = Position_1.Position.checkInstanceOf(chunk);
+        const position = Run_1.Run.Position.checkInstanceOf(chunk);
         this.trackers.forEach((tracker) => {
             const newRecord = tracker.track(position);
             if (newRecord) {
@@ -65,6 +65,7 @@ class Record {
         this.time = time;
         this.startingPosition = startingPosition;
         this.measuredDistance = measuredDistance;
+        this.runMeta = startingPosition.runMeta;
     }
     static checkInstanceOf(chunk) {
         if (chunk instanceof Record) {

@@ -4,9 +4,8 @@ import GpsPoint from "../domain/GpsPoint";
 import * as pify from "pify";
 import * as xml2js from "xml2js";
 import { List } from "immutable";
-import { Position } from "../domain/Position";
 import { Run } from "../domain/Run";
-import { isNullOrUndefined, isUndefined } from "util";
+import { isNullOrUndefined } from "util";
 
 export default function parse(filePath: string) {
     return pify(fs.readFile)(filePath, "utf8")
@@ -39,8 +38,7 @@ export default function parse(filePath: string) {
         .then((data: any) => {
             ensureTagExists(data, "unparsedTrack");
             return {
-                date: data.date,
-                label: data.unparsedTrack[0].name[0],
+                runMeta: new Run.Meta(data.unparsedTrack[0].name[0], data.date),
                 unparsedPoints: data.unparsedTrack[0].trkseg[0].trkpt
             };
         })
@@ -64,9 +62,8 @@ export default function parse(filePath: string) {
          (...)
          */
         .then((data: any) => new Run(
-            data.label,
-            data.date,
-            extractMoments(data.unparsedPoints)
+            data.runMeta,
+            extractPositions(data)
         ));
 }
 
@@ -77,10 +74,12 @@ function ensureTagExists(data: any, tag: string) {
 }
 
 /*
-    extracts from an array of trkpt json objects, a list of moments
+    extracts from an array of trkpt json objects, a list of positions
  */
-function extractMoments(unparsedPoints: any[]): List<Position> {
-    const stack: Position[] = [];
+function extractPositions(
+    { runMeta, unparsedPoints }: { runMeta: Run.Meta, unparsedPoints: any[] }): List<Run.Position> {
+
+    const stack: Run.Position[] = [];
 
     let currentDistance = 0;
     let lastPoint = trkptToGpsPoint(unparsedPoints[0]);
@@ -92,7 +91,7 @@ function extractMoments(unparsedPoints: any[]): List<Position> {
         currentDistance += GpsPoint.distance(lastPoint, cur);
 
         stack.push(
-            toMoment(currentDistance, unparsedPoint.time[0], startTime)
+            toPosition(runMeta, currentDistance, unparsedPoint.time[0], startTime)
         );
 
         lastPoint = cur;
@@ -104,8 +103,9 @@ function trkptToGpsPoint(trkpt: any) {
     return new GpsPoint(trkpt.$.lat, trkpt.$.lon);
 }
 
-function toMoment(distanceFromStart: number, rawTime: string, startTime: moment.Moment) {
-    return new Position(
+function toPosition(runMeta: Run.Meta, distanceFromStart: number, rawTime: string, startTime: moment.Moment) {
+    return new Run.Position(
+        runMeta,
         distanceFromStart,
         moment(rawTime).diff(startTime) / 1000
     );

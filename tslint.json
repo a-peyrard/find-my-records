@@ -11,7 +11,8 @@
         "member-ordering": false,
         "arrow-parens": [true, "ban-single-arg-parens"],
         "max-classes-per-file": false,
-        "interface-name": false
+        "interface-name": false,
+        "no-namespace": false
     },
     "rulesDirectory": []
 }

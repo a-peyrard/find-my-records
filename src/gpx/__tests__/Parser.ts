@@ -19,8 +19,8 @@ describe("parse", () => {
         expect.assertions(9);
         return parse(GPX_FILES_PREFIX + "/gpx-files/basic.gpx")
             .then(run => {
-                expect(run.label).toBe("San Francisco Running");
-                expect(run.date.getTime()).toBe(moment("2017-06-19T01:21:45.000Z").valueOf());
+                expect(run.meta.label).toBe("San Francisco Running");
+                expect(run.meta.date.getTime()).toBe(moment("2017-06-19T01:21:45.000Z").valueOf());
                 expect(run.positions.size).toBe(3);
 
                 const first = run.positions.get(0);

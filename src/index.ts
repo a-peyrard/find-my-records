@@ -21,7 +21,7 @@ parse(filePath)
     .catch(error => console.log(error.message || error));
 
 function printRunRecords(run: Run) {
-    console.log("=> RUN: '" + run.label + "' (" + run.date + ")");
+    console.log("=> RUN: '" + run.meta.label + "' (" + run.meta.date + ")");
 
     console.log(" * measured positions: " + run.positions.size);
     console.log(" * mean distance between position: " + (run.positions.last().distance / run.positions.size) + "m");

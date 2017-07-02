@@ -1,14 +1,14 @@
-import { Position } from "../domain/Position";
+import { Run } from "../domain/Run";
 import { List, Map } from "immutable";
 import { Transform, TransformOptions, Writable, WritableOptions } from "stream";
 import { WrongTypeException } from "../util/Types";
 
 export class Records {
-    public static from(positions: List<Position>) {
+    public static from(positions: List<Run.Position>) {
         return new Records(positions, List<number>());
     }
 
-    private constructor(private readonly positions: List<Position>,
+    private constructor(private readonly positions: List<Run.Position>,
                         private readonly distances: List<number>) {}
 
     public distance(distance: number): Records {
@@ -41,7 +41,7 @@ export class FindRecordsStream extends Transform {
     }
 
     public _transform(chunk: any, encoding: string, callback: (error?: Error, data?: any) => void): void {
-        const position = Position.checkInstanceOf(chunk);
+        const position = Run.Position.checkInstanceOf(chunk);
         this.trackers.forEach((tracker: Tracker) => {
             const newRecord = tracker.track(position);
             if (newRecord) {
@@ -78,10 +78,15 @@ export class Record {
         throw new WrongTypeException("Record", chunk);
     }
 
+    public readonly runMeta: Run.Meta;
+
     public constructor(public readonly distance: number,
                        public readonly time: number,
-                       public readonly startingPosition: Position,
-                       public readonly measuredDistance: number) {}
+                       public readonly startingPosition: Run.Position,
+                       public readonly measuredDistance: number) {
+
+        this.runMeta = startingPosition.runMeta;
+    }
 
     public isBetterThan(other?: Record) {
         if (!other) {
@@ -103,11 +108,11 @@ export class Record {
 
 class Tracker {
     private best: Record;
-    private queue: Position[] = [];
+    private queue: Run.Position[] = [];
 
     public constructor(private readonly distance: number) {}
 
-    public track(position: Position): Record | undefined {
+    public track(position: Run.Position): Record | undefined {
         let newRecord;
 
         this.queue.push(position);

@@ -1,15 +1,16 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 // tslint:disable-next-line:no-var-requires
-const geolib = require("geolib");
-class GpsPoint {
-    constructor(latitude, longitude) {
+var geolib = require("geolib");
+var GpsPoint = (function () {
+    function GpsPoint(latitude, longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
     }
-    static distance(p1, p2) {
+    GpsPoint.distance = function (p1, p2) {
         return geolib.getDistance(p1, p2);
-    }
-}
-exports.default = GpsPoint;
+    };
+    return GpsPoint;
+}());
+exports["default"] = GpsPoint;
 //# sourceMappingURL=GpsPoint.js.map
