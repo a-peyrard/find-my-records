@@ -10,7 +10,7 @@ class ConsoleUpdatableRecordTable {
         this.out = out;
         this.records = new Map();
         this.distances.forEach(distance => this.records.set(distance, undefined));
-        this.lastLineIndex = this.distances.length;
+        this.lastLineIndex = this.distances.size;
     }
     init() {
         this.printTable();

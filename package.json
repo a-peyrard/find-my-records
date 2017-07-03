@@ -42,7 +42,7 @@
     "ts-jest": "^20.0.6",
     "ts-node": "^3.1.0",
     "tslint": "^5.4.3",
-    "typescript": "^2.3.4"
+    "typescript": "^2.4.1"
   },
   "dependencies": {
     "geolib": "^2.0.22",
@@ -51,7 +51,6 @@
     "pify": "^3.0.0",
     "sax": "^1.2.2",
     "sprintf-js": "^1.1.1",
-    "uuid": "^3.1.0",
-    "xml2js": "^0.4.17"
+    "uuid": "^3.1.0"
   }
 }

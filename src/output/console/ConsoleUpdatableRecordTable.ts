@@ -5,15 +5,16 @@ import { sprintf } from "sprintf-js";
 import Socket = NodeJS.Socket;
 import * as moment from "moment";
 import { secondToHuman } from "../../util/Time";
+import { List } from "immutable";
 
 export class ConsoleUpdatableRecordTable implements UpdatableRecordTable {
 
     private readonly lastLineIndex: number;
     private readonly records: Map<number, Record | undefined> = new Map();
 
-    constructor(readonly distances: number[], readonly out: Socket = process.stdout) {
-        this.distances.forEach(distance => this.records.set(distance, undefined));
-        this.lastLineIndex = this.distances.length;
+    constructor(readonly distances: List<number>, readonly out: Socket = process.stdout) {
+        this.distances.forEach(distance => this.records.set(distance!, undefined));
+        this.lastLineIndex = this.distances.size;
     }
 
     public init() {
@@ -24,7 +25,7 @@ export class ConsoleUpdatableRecordTable implements UpdatableRecordTable {
 
     private printTable() {
         this.distances.forEach(distance => {
-            this.printRecord(distance, this.records.get(distance));
+            this.printRecord(distance!, this.records.get(distance!));
             this.out.write("\n");
         });
     }

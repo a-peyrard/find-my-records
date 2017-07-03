@@ -1,46 +1,20 @@
 #!/usr/bin/env node
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Parser_1 = require("./gpx/Parser");
+const fs = require("fs");
+const PositionParserStream_1 = require("./gpx/PositionParserStream");
 const Records_1 = require("./record/Records");
-const Time_1 = require("./util/Time");
+const UpdatableRecordTableStream_1 = require("./output/UpdatableRecordTableStream");
+const ConsoleUpdatableRecordTable_1 = require("./output/console/ConsoleUpdatableRecordTable");
+const immutable_1 = require("immutable");
 if (process.argv.length < 3) {
     console.error("enter the path to a gpx file!");
     process.exit(1);
 }
 const filePath = process.argv[2];
-Parser_1.default(filePath)
-    .catch(error => {
-    throw new Error("[ERROR]: Unable to parse the gpx file: " + filePath + ", check that file is a regular gpx file!\n" +
-        error.message || error);
-})
-    .then(printRunRecords)
-    .catch(error => console.log(error.message || error));
-function printRunRecords(run) {
-    console.log("=> RUN: '" + run.meta.label + "' (" + run.meta.date + ")");
-    console.log(" * measured positions: " + run.positions.size);
-    console.log(" * mean distance between position: " + (run.positions.last().distance / run.positions.size) + "m");
-    const records = Records_1.Records.from(run.positions)
-        .distance(100)
-        .distance(200)
-        .distance(400)
-        .distance(1000)
-        .distance(1609) // miles (crazy unit)
-        .distance(5000)
-        .distance(10000)
-        .distance(15000)
-        .distance(21097) // half
-        .extract();
-    if (records.isEmpty()) {
-        console.log("no records found 😢");
-    }
-    records.sort((r1, r2) => r1.distance - r2.distance)
-        .forEach(printRecord);
-}
-function printRecord(record) {
-    console.log("\t- 🎉 record for " + record.distance + "m in " +
-        Time_1.secondToHuman(record.time) +
-        " (real measured distance: " + record.measuredDistance +
-        ", measured after " + record.startingPosition.distance + "m)");
-}
+const distances = immutable_1.List.of(100, 200, 400, 1000, 1609, 5000, 10000, 15000, 21097);
+fs.createReadStream(filePath, { encoding: "utf8" })
+    .pipe(new PositionParserStream_1.PositionParserStream())
+    .pipe(new Records_1.FindRecordsStream(distances))
+    .pipe(new UpdatableRecordTableStream_1.UpdatableRecordTableStream(new ConsoleUpdatableRecordTable_1.ConsoleUpdatableRecordTable(distances, process.stdout)));
 //# sourceMappingURL=index.js.map
