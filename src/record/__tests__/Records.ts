@@ -1,6 +1,6 @@
 import { List, Map } from "immutable";
 import { Run } from "../../domain/Run";
-import { FindRecordsStream, Record } from "../Records";
+import { FindRecordsStream, Record, RecordsAggregatorStream } from "../Records";
 import { Readable, Writable, WritableOptions } from "stream";
 import { promiseStreamConsumption } from "../../util/Streams";
 
@@ -227,6 +227,61 @@ describe("FindRecordsStream", () => {
             expect(sink.records.has(1000)).toBe(true);
             expect(sink.records.get(1000).runMeta.label).toBe(dummy.label);
             expect(sink.records.get(1000).runMeta.date).toBe(dummy.date);
+        });
+    });
+
+    describe("RecordsAggregatorStream", () => {
+        it("should filter records and keep best", () => {
+            // GIVEN
+            const recordsStream = new Readable({ objectMode: true });
+            recordsStream.push(new Record(1000, 45, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream.push(new Record(1000, 23, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream.push(new Record(1000, 41, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream.push(null);
+
+            const sink = new Sink();
+            return promiseStreamConsumption(
+                // WHEN
+                recordsStream.pipe(new RecordsAggregatorStream())
+                             .pipe(sink)
+            ).then(() => {
+                // THEN
+                expect(sink.records.has(1000)).toBe(true);
+                expect(sink.records.get(1000).time).toBe(23);
+            });
+        });
+
+        it("should aggregate from several sources and keep best", () => {
+            // GIVEN
+            const recordsStream = new Readable({ objectMode: true });
+            recordsStream.push(new Record(1000, 45, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream.push(new Record(1000, 23, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream.push(new Record(1000, 41, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream.push(null);
+
+            const recordsStream2 = new Readable({ objectMode: true });
+            recordsStream2.push(new Record(1000, 31, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream2.push(new Record(1000, 18, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream2.push(new Record(1000, 54, new Run.Position(dummy, 0, 0), 1000));
+            recordsStream2.push(null);
+
+            const sink = new Sink();
+            const aggregator = new RecordsAggregatorStream();
+            return Promise.all([
+                // WHEN
+                promiseStreamConsumption(
+                    recordsStream.pipe(aggregator)
+                                 .pipe(sink)
+                ),
+                promiseStreamConsumption(
+                    recordsStream2.pipe(aggregator)
+                                  .pipe(sink)
+                )
+            ]).then(() => {
+                // THEN
+                expect(sink.records.has(1000)).toBe(true);
+                expect(sink.records.get(1000).time).toBe(18);
+            });
         });
     });
 });
