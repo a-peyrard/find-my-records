@@ -1,202 +1,232 @@
-import {} from "jest";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import { Run } from "../../domain/Run";
-import { Records } from "../Records";
+import { FindRecordsStream, Record } from "../Records";
+import { Readable, Writable, WritableOptions } from "stream";
+import { promiseStreamConsumption } from "../../util/Streams";
 
 const dummy: Run.Meta = new Run.Meta("dummy", new Date());
 
-describe("Records", () => {
+class Sink extends Writable {
+    public readonly records: Map<number, Record> = Map<number, Record>().asMutable();
+
+    constructor(opts?: WritableOptions) {
+        super({ ...opts, objectMode: true });
+    }
+
+    public _write(chunk: any, encoding: string, done: (error?: Error) => void): void {
+        const record = Record.checkInstanceOf(chunk);
+        this.records.set(record.distance, record);
+        done();
+    }
+}
+
+describe("FindRecordsStream", () => {
     it("should not extract anything if there is no record", () => {
         // GIVEN
-        const positions = List([
-            new Run.Position(dummy, 0, 0),
-            new Run.Position(dummy, 10, 10),
-            new Run.Position(dummy, 50, 20),
-            new Run.Position(dummy, 550, 30)
-        ]);
+        const positionsStream = new Readable({ objectMode: true });
+        positionsStream.push(new Run.Position(dummy, 0, 0));
+        positionsStream.push(new Run.Position(dummy, 10, 10));
+        positionsStream.push(new Run.Position(dummy, 50, 20));
+        positionsStream.push(new Run.Position(dummy, 550, 30));
+        positionsStream.push(null);
 
-        // WHEN
-        const records = Records.from(positions)
-                               .distance(1000)
-                               .extract();
-
-        // THEN
-        expect(records.has(1000)).toBe(false);
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            // WHEN
+            positionsStream.pipe(new FindRecordsStream(List.of(1000)))
+                        .pipe(sink)
+        ).then(() => {
+            // THEN
+            expect(sink.records.has(1000)).toBe(false);
+        });
     });
 
     it("should extract record", () => {
         // GIVEN
-        const positions = List([
-            new Run.Position(dummy, 0, 0),
-            new Run.Position(dummy, 10, 10),
-            new Run.Position(dummy, 50, 20),
-            new Run.Position(dummy, 500, 30),
-            new Run.Position(dummy, 1000, 140)
-        ]);
+        const positionsStream = new Readable({ objectMode: true });
+        positionsStream.push(new Run.Position(dummy, 0, 0));
+        positionsStream.push(new Run.Position(dummy, 10, 10));
+        positionsStream.push(new Run.Position(dummy, 50, 20));
+        positionsStream.push(new Run.Position(dummy, 500, 30));
+        positionsStream.push(new Run.Position(dummy, 1000, 140));
+        positionsStream.push(null);
 
-        // WHEN
-        const records = Records.from(positions)
-                               .distance(1000)
-                               .extract();
-
-        // THEN
-        expect(records.has(1000)).toBe(true);
-        const kmRecord = records.get(1000);
-        expect(kmRecord.time).toBe(140);
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            // WHEN
+            positionsStream.pipe(new FindRecordsStream(List.of(1000)))
+                        .pipe(sink)
+        ).then(() => {
+            // THEN
+            expect(sink.records.has(1000)).toBe(true);
+            const kmRecord = sink.records.get(1000);
+            expect(kmRecord.time).toBe(140);
+        });
     });
 
     it("should extract starting position in record", () => {
         // GIVEN
         const initialPosition = new Run.Position(dummy, 0, 0);
 
-        const positions = List([
-            initialPosition,
-            new Run.Position(dummy, 10, 10),
-            new Run.Position(dummy, 50, 20),
-            new Run.Position(dummy, 500, 30),
-            new Run.Position(dummy, 1000, 140)
-        ]);
+        const positionsStream = new Readable({ objectMode: true });
+        positionsStream.push(initialPosition);
+        positionsStream.push(new Run.Position(dummy, 10, 10));
+        positionsStream.push(new Run.Position(dummy, 50, 20));
+        positionsStream.push(new Run.Position(dummy, 500, 30));
+        positionsStream.push(new Run.Position(dummy, 1000, 140));
+        positionsStream.push(null);
 
-        // WHEN
-        const records = Records.from(positions)
-                               .distance(1000)
-                               .extract();
-
-        // THEN
-        expect(records.has(1000)).toBe(true);
-        const halfKmRecord = records.get(1000);
-        expect(halfKmRecord.startingPosition).toBe(initialPosition);
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            // WHEN
+            positionsStream.pipe(new FindRecordsStream(List.of(1000)))
+                        .pipe(sink)
+        ).then(() => {
+            // THEN
+            expect(sink.records.has(1000)).toBe(true);
+            const halfKmRecord = sink.records.get(1000);
+            expect(halfKmRecord.startingPosition).toBe(initialPosition);
+        });
     });
 
     it("should extract multiple record", () => {
         // GIVEN
-        const positions = List([
-            new Run.Position(dummy, 0, 0),
-            new Run.Position(dummy, 10, 10),
-            new Run.Position(dummy, 50, 20),
-            new Run.Position(dummy, 500, 30),
-            new Run.Position(dummy, 1000, 140)
-        ]);
+        const positionsStream = new Readable({ objectMode: true });
+        positionsStream.push(new Run.Position(dummy, 0, 0));
+        positionsStream.push(new Run.Position(dummy, 10, 10));
+        positionsStream.push(new Run.Position(dummy, 50, 20));
+        positionsStream.push(new Run.Position(dummy, 500, 30));
+        positionsStream.push(new Run.Position(dummy, 1000, 140));
+        positionsStream.push(null);
 
-        // WHEN
-        const records = Records.from(positions)
-                               .distance(500)
-                               .distance(1000)
-                               .extract();
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            // WHEN
+            positionsStream.pipe(new FindRecordsStream(List.of(500, 1000)))
+                        .pipe(sink)
+        ).then(() => {
+            // THEN
+            expect(sink.records.has(500)).toBe(true);
+            const halfKmRecord = sink.records.get(500);
+            expect(halfKmRecord.time).toBe(30);
 
-        // THEN
-        expect(records.has(500)).toBe(true);
-        const halfKmRecord = records.get(500);
-        expect(halfKmRecord.time).toBe(30);
-
-        expect(records.has(1000)).toBe(true);
-        const kmRecord = records.get(1000);
-        expect(kmRecord.time).toBe(140);
+            expect(sink.records.has(1000)).toBe(true);
+            const kmRecord = sink.records.get(1000);
+            expect(kmRecord.time).toBe(140);
+        });
     });
 
     it("should find best match for record", () => {
         // GIVEN
         const pivot = new Run.Position(dummy, 1050, 140);
-        const positions = List([
-            new Run.Position(dummy, 0, 0),
-            new Run.Position(dummy, 10, 10),
-            new Run.Position(dummy, 50, 20),
-            new Run.Position(dummy, 500, 30),
-            pivot,
-            new Run.Position(dummy, 1090, 141),
-            new Run.Position(dummy, 1190, 142),
-            new Run.Position(dummy, 1290, 143),
-            new Run.Position(dummy, 1390, 144),
-            new Run.Position(dummy, 1590, 145),
-            new Run.Position(dummy, 1890, 146),
-            new Run.Position(dummy, 2070, 147),
-            new Run.Position(dummy, 2090, 167),
-            new Run.Position(dummy, 2200, 200),
-        ]);
+        const positionsStream = new Readable({ objectMode: true });
+        positionsStream.push(new Run.Position(dummy, 0, 0));
+        positionsStream.push(new Run.Position(dummy, 10, 10));
+        positionsStream.push(new Run.Position(dummy, 50, 20));
+        positionsStream.push(new Run.Position(dummy, 500, 30));
+        positionsStream.push(pivot);
+        positionsStream.push(new Run.Position(dummy, 1090, 141));
+        positionsStream.push(new Run.Position(dummy, 1190, 142));
+        positionsStream.push(new Run.Position(dummy, 1290, 143));
+        positionsStream.push(new Run.Position(dummy, 1390, 144));
+        positionsStream.push(new Run.Position(dummy, 1590, 145));
+        positionsStream.push(new Run.Position(dummy, 1890, 146));
+        positionsStream.push(new Run.Position(dummy, 2070, 147));
+        positionsStream.push(new Run.Position(dummy, 2090, 167));
+        positionsStream.push(new Run.Position(dummy, 2200, 200));
+        positionsStream.push(null);
 
-        // WHEN
-        const records = Records.from(positions)
-                               .distance(1000)
-                               .extract();
-
-        // THEN
-        expect(records.has(1000)).toBe(true);
-        const kmRecord = records.get(1000);
-        expect(kmRecord.time).toBe(7);
-        expect(kmRecord.startingPosition).toBe(pivot);
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            // WHEN
+            positionsStream.pipe(new FindRecordsStream(List.of(1000)))
+                        .pipe(sink)
+        ).then(() => {
+            // THEN
+            expect(sink.records.has(1000)).toBe(true);
+            const kmRecord = sink.records.get(1000);
+            expect(kmRecord.time).toBe(7);
+            expect(kmRecord.startingPosition).toBe(pivot);
+        });
     });
 
     it("should find best match for by removing from tail", () => {
         // GIVEN
-        let startRecord;
-        const positions = List([
-            new Run.Position(dummy, 0, 0),
-            new Run.Position(dummy, 10, 10),
-            new Run.Position(dummy, 11, 11),
-            new Run.Position(dummy, 12, 12),
-            new Run.Position(dummy, 13, 13),
-            new Run.Position(dummy, 14, 14),
-            startRecord = new Run.Position(dummy, 15, 15),
-            new Run.Position(dummy, 115, 45),
-            new Run.Position(dummy, 118, 234),
-            new Run.Position(dummy, 120, 800),
-        ]);
+        const startRecord = new Run.Position(dummy, 15, 15);
+        const positionsStream = new Readable({ objectMode: true });
+        positionsStream.push(new Run.Position(dummy, 0, 0));
+        positionsStream.push(new Run.Position(dummy, 10, 10));
+        positionsStream.push(new Run.Position(dummy, 11, 11));
+        positionsStream.push(new Run.Position(dummy, 12, 12));
+        positionsStream.push(new Run.Position(dummy, 13, 13));
+        positionsStream.push(new Run.Position(dummy, 14, 14));
+        positionsStream.push(startRecord);
+        positionsStream.push(new Run.Position(dummy, 115, 45));
+        positionsStream.push(new Run.Position(dummy, 118, 234));
+        positionsStream.push(new Run.Position(dummy, 120, 800));
+        positionsStream.push(null);
 
-        // WHEN
-        const records = Records.from(positions)
-                               .distance(100)
-                               .extract();
-
-        // THEN
-        const record = records.get(100);
-        expect(record.time).toBe(30);
-        expect(record.startingPosition).toBe(startRecord);
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            // WHEN
+            positionsStream.pipe(new FindRecordsStream(List.of(100)))
+                        .pipe(sink)
+        ).then(() => {
+            // THEN
+            const record = sink.records.get(100);
+            expect(record.time).toBe(30);
+            expect(record.startingPosition).toBe(startRecord);
+        });
     });
 
     it("should get real record measured distance", () => {
         // GIVEN
-        const positions = List([
-            new Run.Position(dummy, 0, 0),
-            new Run.Position(dummy, 10, 10),
-            new Run.Position(dummy, 50, 20),
-            new Run.Position(dummy, 500, 30),
-            new Run.Position(dummy, 1090, 141),
-            new Run.Position(dummy, 2200, 200),
-            new Run.Position(dummy, 2500, 300),
-        ]);
+        const positionsStream = new Readable({ objectMode: true });
+        positionsStream.push(new Run.Position(dummy, 0, 0));
+        positionsStream.push(new Run.Position(dummy, 10, 10));
+        positionsStream.push(new Run.Position(dummy, 50, 20));
+        positionsStream.push(new Run.Position(dummy, 500, 30));
+        positionsStream.push(new Run.Position(dummy, 1090, 141));
+        positionsStream.push(new Run.Position(dummy, 2200, 200));
+        positionsStream.push(new Run.Position(dummy, 2500, 300));
+        positionsStream.push(null);
 
-        // WHEN
-        const records = Records.from(positions)
-                               .distance(2000)
-                               .extract();
-
-        // THEN
-        expect(records.has(2000)).toBe(true);
-        const kmRecord = records.get(2000);
-        expect(kmRecord.time).toBe(180);
-        expect(kmRecord.measuredDistance).toBe(2150);
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            // WHEN
+            positionsStream.pipe(new FindRecordsStream(List.of(2000)))
+                        .pipe(sink)
+        ).then(() => {
+            // THEN
+            expect(sink.records.has(2000)).toBe(true);
+            const kmRecord = sink.records.get(2000);
+            expect(kmRecord.time).toBe(180);
+            expect(kmRecord.measuredDistance).toBe(2150);
+        });
     });
 
     it("should contains run's metadata", () => {
         // GIVEN
-        const positions = List([
-            new Run.Position(dummy, 0, 0),
-            new Run.Position(dummy, 10, 10),
-            new Run.Position(dummy, 50, 20),
-            new Run.Position(dummy, 500, 30),
-            new Run.Position(dummy, 1090, 141),
-            new Run.Position(dummy, 2200, 200),
-            new Run.Position(dummy, 2500, 300),
-        ]);
+        const positionsStream = new Readable({ objectMode: true });
+        positionsStream.push(new Run.Position(dummy, 0, 0));
+        positionsStream.push(new Run.Position(dummy, 10, 10));
+        positionsStream.push(new Run.Position(dummy, 50, 20));
+        positionsStream.push(new Run.Position(dummy, 500, 30));
+        positionsStream.push(new Run.Position(dummy, 1090, 141));
+        positionsStream.push(new Run.Position(dummy, 2200, 200));
+        positionsStream.push(new Run.Position(dummy, 2500, 300));
+        positionsStream.push(null);
 
-        // WHEN
-        const records = Records.from(positions)
-                               .distance(1000)
-                               .extract();
-
-        // THEN
-        expect(records.has(1000)).toBe(true);
-        expect(records.get(1000).runMeta.label).toBe(dummy.label);
-        expect(records.get(1000).runMeta.date).toBe(dummy.date);
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            // WHEN
+            positionsStream.pipe(new FindRecordsStream(List.of(1000)))
+                        .pipe(sink)
+        ).then(() => {
+            // THEN
+            expect(sink.records.has(1000)).toBe(true);
+            expect(sink.records.get(1000).runMeta.label).toBe(dummy.label);
+            expect(sink.records.get(1000).runMeta.date).toBe(dummy.date);
+        });
     });
 });

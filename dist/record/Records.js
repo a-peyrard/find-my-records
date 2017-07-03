@@ -4,29 +4,6 @@ const Run_1 = require("../domain/Run");
 const immutable_1 = require("immutable");
 const stream_1 = require("stream");
 const Types_1 = require("../util/Types");
-class Records {
-    constructor(positions, distances) {
-        this.positions = positions;
-        this.distances = distances;
-    }
-    static from(positions) {
-        return new Records(positions, immutable_1.List());
-    }
-    distance(distance) {
-        return new Records(this.positions, this.distances.push(distance));
-    }
-    extract() {
-        if (this.distances.isEmpty()) {
-            throw new Error("unable to calculate any record, there is no specified distances!");
-        }
-        const findRecords = new FindRecordsStream(this.distances);
-        const collector = new RecordsCollector();
-        findRecords.pipe(collector);
-        this.positions.forEach(position => findRecords.write(position));
-        return collector.extractBests();
-    }
-}
-exports.Records = Records;
 class RecordsAggregatorStream extends stream_1.Transform {
     constructor(options) {
         super(Object.assign({}, options, { objectMode: true }));
@@ -61,20 +38,6 @@ class FindRecordsStream extends stream_1.Transform {
     }
 }
 exports.FindRecordsStream = FindRecordsStream;
-class RecordsCollector extends stream_1.Writable {
-    constructor(options) {
-        super(Object.assign({}, options, { objectMode: true }));
-        this.records = immutable_1.Map().asMutable();
-    }
-    _write(chunk, encoding, done) {
-        const record = Record.checkInstanceOf(chunk);
-        this.records.set(record.distance, record);
-        done();
-    }
-    extractBests() {
-        return this.records.asImmutable();
-    }
-}
 class Record {
     constructor(distance, time, startingPosition, measuredDistance) {
         this.distance = distance;

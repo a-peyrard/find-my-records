@@ -1,31 +1,7 @@
 import { Run } from "../domain/Run";
 import { List, Map } from "immutable";
-import { Transform, TransformOptions, Writable, WritableOptions } from "stream";
+import { Transform, TransformOptions } from "stream";
 import { WrongTypeException } from "../util/Types";
-
-export class Records {
-    public static from(positions: List<Run.Position>) {
-        return new Records(positions, List<number>());
-    }
-
-    private constructor(private readonly positions: List<Run.Position>,
-                        private readonly distances: List<number>) {}
-
-    public distance(distance: number): Records {
-        return new Records(this.positions, this.distances.push(distance));
-    }
-
-    public extract(): Map<number, Record> {
-        if (this.distances.isEmpty()) {
-            throw new Error("unable to calculate any record, there is no specified distances!");
-        }
-        const findRecords = new FindRecordsStream(this.distances);
-        const collector = new RecordsCollector();
-        findRecords.pipe(collector);
-        this.positions.forEach(position => findRecords.write(position));
-        return collector.extractBests();
-    }
-}
 
 export class RecordsAggregatorStream extends Transform {
     private readonly records: Map<number, Record> = Map<number, Record>().asMutable();
@@ -68,24 +44,6 @@ export class FindRecordsStream extends Transform {
             }
         });
         callback();
-    }
-}
-
-class RecordsCollector extends Writable {
-    private readonly records: Map<number, Record> = Map<number, Record>().asMutable();
-
-    constructor(options?: WritableOptions) {
-        super({ ...options, objectMode: true });
-    }
-
-    public _write(chunk: any, encoding: string, done: (error?: Error) => void): void {
-        const record = Record.checkInstanceOf(chunk);
-        this.records.set(record.distance, record);
-        done();
-    }
-
-    public extractBests(): Map<number, Record> {
-        return this.records.asImmutable();
     }
 }
 
