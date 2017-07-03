@@ -7,29 +7,33 @@ import { UpdatableRecordTableStream } from "./output/UpdatableRecordTableStream"
 import { ConsoleUpdatableRecordTable } from "./output/console/ConsoleUpdatableRecordTable";
 import { List } from "immutable";
 import { randomDelay } from "./util/Streams";
+import * as program  from "commander";
 
-if (process.argv.length < 3) {
-    console.error("enter the path to a gpx file!");
-    process.exit(1);
-}
+program
+    .version("0.1.3")
+    .description("find run records in a gpx file")
+    .usage("<gpx-file>")
+    .arguments("<gpx-file>")
+    .action(gpxFile => {
+        const distances: List<number> = List.of(
+            100,
+            200,
+            400,
+            1000,
+            1609,
+            5000,
+            10000,
+            15000,
+            21097
+        );
 
-const filePath = process.argv[2];
-const distances: List<number> = List.of(
-    100,
-    200,
-    400,
-    1000,
-    1609,
-    5000,
-    10000,
-    15000,
-    21097
-);
+        fs.createReadStream(gpxFile, { encoding: "utf8" })
+          .pipe(new PositionParserStream())
+          .pipe(new FindRecordsStream(distances))
+          .pipe(randomDelay(10, 50))
+          .pipe(new UpdatableRecordTableStream(
+              new ConsoleUpdatableRecordTable(distances, process.stdout)
+          ));
+    })
+    .parse(process.argv);
 
-fs.createReadStream(filePath, { encoding: "utf8" })
-  .pipe(new PositionParserStream())
-  .pipe(new FindRecordsStream(distances))
-  .pipe(randomDelay(10, 50))
-  .pipe(new UpdatableRecordTableStream(
-      new ConsoleUpdatableRecordTable(distances, process.stdout)
-  ));
