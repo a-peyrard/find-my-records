@@ -6,7 +6,7 @@ import { FindRecordsStream } from "./record/Records";
 import { UpdatableRecordTableStream } from "./output/UpdatableRecordTableStream";
 import { ConsoleUpdatableRecordTable } from "./output/console/ConsoleUpdatableRecordTable";
 import { List } from "immutable";
-import { promiseStreamConsumption } from "./util/Streams";
+import { randomDelay } from "./util/Streams";
 
 if (process.argv.length < 3) {
     console.error("enter the path to a gpx file!");
@@ -29,6 +29,7 @@ const distances: List<number> = List.of(
 fs.createReadStream(filePath, { encoding: "utf8" })
   .pipe(new PositionParserStream())
   .pipe(new FindRecordsStream(distances))
+  .pipe(randomDelay(10, 50))
   .pipe(new UpdatableRecordTableStream(
       new ConsoleUpdatableRecordTable(distances, process.stdout)
   ));
