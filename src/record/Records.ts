@@ -27,6 +27,25 @@ export class Records {
     }
 }
 
+export class RecordsAggregatorStream extends Transform {
+    private readonly records: Map<number, Record> = Map<number, Record>().asMutable();
+
+    constructor(options?: TransformOptions) {
+        super({ ...options, objectMode: true });
+    }
+
+    public _transform(chunk: any, encoding: string, done: (error?: Error, data?: any) => void): void {
+        const record = Record.checkInstanceOf(chunk);
+
+        const oldRecord = this.records.get(record.distance);
+        if (record.isBetterThan(oldRecord)) {
+            this.records.set(record.distance, record);
+            this.push(record);
+        }
+        done();
+    }
+}
+
 export class FindRecordsStream extends Transform {
     private readonly trackers: Map<number, Tracker>;
 

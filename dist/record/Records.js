@@ -27,6 +27,22 @@ class Records {
     }
 }
 exports.Records = Records;
+class RecordsAggregatorStream extends stream_1.Transform {
+    constructor(options) {
+        super(Object.assign({}, options, { objectMode: true }));
+        this.records = immutable_1.Map().asMutable();
+    }
+    _transform(chunk, encoding, done) {
+        const record = Record.checkInstanceOf(chunk);
+        const oldRecord = this.records.get(record.distance);
+        if (record.isBetterThan(oldRecord)) {
+            this.records.set(record.distance, record);
+            this.push(record);
+        }
+        done();
+    }
+}
+exports.RecordsAggregatorStream = RecordsAggregatorStream;
 class FindRecordsStream extends stream_1.Transform {
     constructor(distances, options) {
         super(Object.assign({}, options, { objectMode: true }));
