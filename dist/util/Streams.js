@@ -76,4 +76,18 @@ class Merger {
         return output.setMaxListeners(output.getMaxListeners() + 10);
     }
 }
+function peek(consumer) {
+    return new PeekerStream(consumer);
+}
+exports.peek = peek;
+class PeekerStream extends stream_1.Transform {
+    constructor(consumer, opts) {
+        super(Object.assign({}, opts, { objectMode: true }));
+        this.consumer = consumer;
+    }
+    _transform(chunk, encoding, done) {
+        this.consumer(chunk);
+        done(null, chunk);
+    }
+}
 //# sourceMappingURL=Streams.js.map

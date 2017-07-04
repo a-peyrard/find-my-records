@@ -1,5 +1,6 @@
 import { Readable, Transform, Writable } from "stream";
-import { merge, promiseStreamConsumption } from "../Streams";
+import { merge, peek, promiseStreamConsumption } from "../Streams";
+import { arraysEquals } from "../Arrays";
 
 class Sink extends Writable {
     public readonly words: string[] = [];
@@ -72,6 +73,25 @@ describe("merge", () => {
             expect(sink.words).toContain("bar");
 
             expect(sinkFailure.words).toHaveLength(0);
+        });
+    });
+});
+
+describe("peek", () => {
+    it("should peek every chunks of stream", () => {
+        // GIVEN
+        const readable = new Readable();
+        readable.push("foo");
+        readable.push("bar");
+        readable.push(null);
+
+        // WHEN
+        const peeked: string[] = [];
+        const sink = new Sink();
+        return promiseStreamConsumption(
+            readable.pipe(peek(chunk => peeked.push(chunk.toString()))).pipe(sink)
+        ).then(() => {
+            expect(arraysEquals(peeked, sink.words)).toBeTruthy();
         });
     });
 });

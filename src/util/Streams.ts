@@ -1,5 +1,4 @@
-import { Transform } from "stream";
-import { TransformOptions } from "babel-core";
+import { Transform, TransformOptions } from "stream";
 
 export function promiseStreamConsumption(stream: NodeJS.EventEmitter) {
     return new Promise((resolve, reject) => {
@@ -83,5 +82,20 @@ class Merger {
             );
         }
         return output.setMaxListeners(output.getMaxListeners() + 10);
+    }
+}
+
+export function peek(consumer: (chunk: any) => void) {
+    return new PeekerStream(consumer);
+}
+
+class PeekerStream extends Transform {
+    constructor(private readonly consumer: (chunk: any) => void, opts?: TransformOptions) {
+        super({ ...opts, objectMode: true });
+    }
+
+    public _transform(chunk: any, encoding: string, done: (error?: Error | null, chunk?: any) => void): void {
+        this.consumer(chunk);
+        done(null, chunk);
     }
 }
