@@ -7,6 +7,7 @@ import { UpdatableRecordTableStream } from "./output/UpdatableRecordTableStream"
 import { ConsoleUpdatableRecordTable } from "./output/console/ConsoleUpdatableRecordTable";
 import { List } from "immutable";
 import * as program from "commander";
+import { merge } from "./util/Streams";
 
 program
     .version("0.1.3")
@@ -26,16 +27,14 @@ program
             21097
         );
 
-        const aggregatorStream = new RecordsAggregatorStream().setMaxListeners(0);
-        const updatableRecordTableStream = new UpdatableRecordTableStream(
-            new ConsoleUpdatableRecordTable(distances, process.stdout)
-        );
-        aggregatorStream.pipe(updatableRecordTableStream);
-        gpxFiles.forEach(gpxFile =>
-            fs.createReadStream(gpxFile, { encoding: "utf8" })
-              .pipe(new PositionParserStream())
-              .pipe(new FindRecordsStream(distances))
-              .pipe(aggregatorStream, { end: false })
-        );
+        merge(gpxFiles.map(
+            gpxFile => fs.createReadStream(gpxFile, { encoding: "utf8" })
+                         .pipe(new PositionParserStream())
+                         .pipe(new FindRecordsStream(distances))
+        ))
+            .into(new RecordsAggregatorStream())
+            .pipe(new UpdatableRecordTableStream(
+                new ConsoleUpdatableRecordTable(distances, process.stdout)
+            ));
     })
     .parse(process.argv);

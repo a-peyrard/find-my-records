@@ -8,6 +8,7 @@ const UpdatableRecordTableStream_1 = require("./output/UpdatableRecordTableStrea
 const ConsoleUpdatableRecordTable_1 = require("./output/console/ConsoleUpdatableRecordTable");
 const immutable_1 = require("immutable");
 const program = require("commander");
+const Streams_1 = require("./util/Streams");
 program
     .version("0.1.3")
     .description("find run records in a gpx file")
@@ -15,13 +16,11 @@ program
     .arguments("<gpx-file...>")
     .action((gpxFiles) => {
     const distances = immutable_1.List.of(100, 200, 400, 1000, 1609, 5000, 10000, 15000, 21097);
-    const aggregatorStream = new Records_1.RecordsAggregatorStream().setMaxListeners(0);
-    const updatableRecordTableStream = new UpdatableRecordTableStream_1.UpdatableRecordTableStream(new ConsoleUpdatableRecordTable_1.ConsoleUpdatableRecordTable(distances, process.stdout));
-    aggregatorStream.pipe(updatableRecordTableStream);
-    gpxFiles.forEach(gpxFile => fs.createReadStream(gpxFile, { encoding: "utf8" })
+    Streams_1.merge(gpxFiles.map(gpxFile => fs.createReadStream(gpxFile, { encoding: "utf8" })
         .pipe(new PositionParserStream_1.PositionParserStream())
-        .pipe(new Records_1.FindRecordsStream(distances))
-        .pipe(aggregatorStream, { end: false }));
+        .pipe(new Records_1.FindRecordsStream(distances))))
+        .into(new Records_1.RecordsAggregatorStream())
+        .pipe(new UpdatableRecordTableStream_1.UpdatableRecordTableStream(new ConsoleUpdatableRecordTable_1.ConsoleUpdatableRecordTable(distances, process.stdout)));
 })
     .parse(process.argv);
 //# sourceMappingURL=index.js.map
