@@ -1,6 +1,6 @@
 {
   "name": "find-my-records",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Small project to find records in gpx file.",
   "bin": "./dist/index.js",
   "license": "MIT",
