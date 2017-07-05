@@ -7,8 +7,9 @@ import { UpdatableRecordTableStream } from "./output/UpdatableRecordTableStream"
 import { ConsoleUpdatableRecordTable } from "./output/console/ConsoleUpdatableRecordTable";
 import { List } from "immutable";
 import * as program from "commander";
-import { merge, peek } from "./util/Streams";
+import { merge, peek, randomDelay } from "./util/Streams";
 import * as moment from "moment";
+import { PassThrough } from "stream";
 
 const DEFAULT_DISTANCES: List<number> = List.of(
     100,
@@ -27,6 +28,7 @@ program
     .description("find run records in a gpx file")
     .usage("[options] <gpx-file...>")
     .option('--distances <distance,...>', 'distances for records (in meter), list of distances comma separated without spaces', false)
+    .option('-s, --slow [flag]', 'slow down the broadcasting of records to the table (just for demo), default false', false)
     .arguments("<gpx-file...>")
     .action((gpxFiles: string[], options: any) => {
         const start = moment();
@@ -39,6 +41,7 @@ program
                          .pipe(new PositionParserStream())
                          .pipe(peek(() => recordTable.tick()))
                          .pipe(new FindRecordsStream(distances))
+                         .pipe(options.slow ? randomDelay(10, 50) : new PassThrough({ objectMode: true }))
         ))
             .into(new RecordsAggregatorStream())
             .pipe(new UpdatableRecordTableStream(recordTable))
