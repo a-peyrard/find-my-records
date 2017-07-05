@@ -3,6 +3,7 @@
     "outDir": "./dist/",
     "sourceMap": true,
     "noImplicitAny": true,
+    "strictNullChecks": true,
     "module": "commonjs",
     "target": "es2015"
   },
@@ -10,5 +11,7 @@
     "node_modules",
     "dist",
     "./src/**/__tests__/*.ts"
-  ]
+  ],
+  "baseUrl": "types",
+  "typeRoots": ["types"]
 }

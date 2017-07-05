@@ -1,78 +1,45 @@
 #!/usr/bin/env node
-import parse from "./gpx/Parser";
-import { Records, Record } from "./record/Records";
-import { Run } from "./domain/Run";
+
+import * as fs from "fs";
+import { PositionParserStream } from "./gpx/PositionParserStream";
+import { FindRecordsStream, RecordsAggregatorStream } from "./record/Records";
+import { UpdatableRecordTableStream } from "./output/UpdatableRecordTableStream";
+import { ConsoleUpdatableRecordTable } from "./output/console/ConsoleUpdatableRecordTable";
+import { List } from "immutable";
+import * as program from "commander";
+import { merge, peek } from "./util/Streams";
 import * as moment from "moment";
 
-if (process.argv.length < 3) {
-    console.error("enter the path to a gpx file!");
-    process.exit(1);
-}
+program
+    .version("0.1.3")
+    .description("find run records in a gpx file")
+    .usage("<gpx-file...>")
+    .arguments("<gpx-file...>")
+    .action((gpxFiles: string[]) => {
+        const start = moment();
 
-const filePath = process.argv[2];
-parse(filePath)
-    .catch(error => {
-        throw new Error(
-            "[ERROR]: Unable to parse the gpx file: " + filePath + ", check that file is a regular gpx file!\n" +
-            error.message || error
+        const distances: List<number> = List.of(
+            100,
+            200,
+            400,
+            1000,
+            1609,
+            5000,
+            10000,
+            15000,
+            21097
         );
+        const recordTable = new ConsoleUpdatableRecordTable(distances, process.stdout);
+        merge(gpxFiles.map(
+            gpxFile => fs.createReadStream(gpxFile, { encoding: "utf8" })
+                         .pipe(new PositionParserStream())
+                         .pipe(peek(() => recordTable.tick()))
+                         .pipe(new FindRecordsStream(distances))
+        ))
+            .into(new RecordsAggregatorStream())
+            .pipe(new UpdatableRecordTableStream(recordTable))
+            .on("finish", () => {
+                process.stdout.write(`🚀  in ${moment().diff(start)}ms\n`);
+            });
     })
-    .then(printRunRecords)
-    .catch(error => console.log(error.message || error));
-
-function printRunRecords(run: Run) {
-    console.log("=> RUN: '" + run.label + "' (" + run.date + ")");
-
-    console.log(" * measured positions: " + run.positions.size);
-    console.log(" * mean distance between position: " + (run.positions.last().distance / run.positions.size) + "m");
-
-    const records = Records.from(run.positions)
-                           .distance(100)
-                           .distance(200)
-                           .distance(400)
-                           .distance(1000)
-                           .distance(1609) // miles (crazy unit)
-                           .distance(5000)
-                           .distance(10000)
-                           .distance(15000)
-                           .distance(21097) // half
-                           .extract();
-    if (records.isEmpty()) {
-        console.log("no records found 😢");
-    }
-    records.sort((r1, r2) => r1.distance - r2.distance)
-           .forEach(printRecord);
-}
-
-function printRecord(record: Record) {
-    console.log("\t- 🎉 record for " + record.distance + "m in " +
-        secondToHuman(record.time) +
-        " (real measured distance: " + record.measuredDistance +
-        ", measured after " + record.startingPosition.distance + "m)");
-}
-
-function secondToHuman(rawSeconds: number): string {
-    const duration = moment.duration(rawSeconds, "second");
-
-    let res = "";
-    const hours = duration.hours();
-    const minutes = duration.minutes();
-    const seconds = duration.seconds();
-
-    let display = false;
-    if (hours > 0) {
-        res += hours + "h";
-        display = true;
-    }
-    if (display || minutes > 0) {
-        res += pad2(minutes) + "m";
-    }
-    return res + pad2(seconds) + "s";
-}
-
-function pad2(n: number) {
-    if (n < 10) {
-        return "0" + n;
-    }
-    return n;
-}
+    .parse(process.argv);

@@ -1,40 +1,69 @@
-import { Position } from "../domain/Position";
+import { Run } from "../domain/Run";
 import { List, Map } from "immutable";
+import { Transform, TransformOptions } from "stream";
+import { WrongTypeException } from "../util/Types";
 
-export class Records {
-    public static from(positions: List<Position>) {
-        return new Records(positions, List<number>());
+export class RecordsAggregatorStream extends Transform {
+    private readonly records: Map<number, Record> = Map<number, Record>().asMutable();
+
+    constructor(options?: TransformOptions) {
+        super({ ...options, objectMode: true });
     }
 
-    private constructor(private readonly positions: List<Position>,
-                        private readonly distances: List<number>) {}
+    public _transform(chunk: any, encoding: string, done: (error?: Error, data?: any) => void): void {
+        const record = Record.checkInstanceOf(chunk);
 
-    public distance(distance: number): Records {
-        return new Records(this.positions, this.distances.push(distance));
-    }
-
-    public extract(): Map<number, Record> {
-        if (this.distances.isEmpty()) {
-            throw new Error("unable to calculate any record, there is no specified distances!");
+        const oldRecord = this.records.get(record.distance);
+        if (record.isBetterThan(oldRecord)) {
+            this.records.set(record.distance, record);
+            this.push(record);
         }
-        const trackers = Map<number, Tracker>().withMutations(
-            mutable => this.distances.forEach(distance => mutable.set(distance, new Tracker(distance)))
+        done();
+    }
+}
+
+export class FindRecordsStream extends Transform {
+    private readonly trackers: Map<number, Tracker>;
+
+    constructor(readonly distances: List<number>, options?: TransformOptions) {
+        super({ ...options, objectMode: true });
+
+        this.trackers = Map<number, Tracker>().withMutations(
+            mutable => this.distances.forEach(
+                (distance: number) => mutable.set(distance, new Tracker(distance))
+            )
         );
-        this.positions.forEach(
-            position => trackers.forEach(tracker => tracker.track(position))
-        );
-        return trackers.toSeq()
-                       .filter(tracker => tracker.hasRecord())
-                       .map(tracker => tracker.getRecord())
-                       .toMap();
+    }
+
+    public _transform(chunk: any, encoding: string, callback: (error?: Error, data?: any) => void): void {
+        const position = Run.Position.checkInstanceOf(chunk);
+        this.trackers.forEach((tracker: Tracker) => {
+            const newRecord = tracker.track(position);
+            if (newRecord) {
+                this.push(newRecord);
+            }
+        });
+        callback();
     }
 }
 
 export class Record {
+    public static checkInstanceOf(chunk: any): Record {
+        if (chunk instanceof Record) {
+            return chunk as Record;
+        }
+        throw new WrongTypeException("Record", chunk);
+    }
+
+    public readonly runMeta: Run.Meta;
+
     public constructor(public readonly distance: number,
                        public readonly time: number,
-                       public readonly startingPosition: Position,
-                       public readonly measuredDistance: number) {}
+                       public readonly startingPosition: Run.Position,
+                       public readonly measuredDistance: number) {
+
+        this.runMeta = startingPosition.runMeta;
+    }
 
     public isBetterThan(other?: Record) {
         if (!other) {
@@ -56,29 +85,25 @@ export class Record {
 
 class Tracker {
     private best: Record;
-    private queue: Position[] = [];
+    private queue: Run.Position[] = [];
 
     public constructor(private readonly distance: number) {}
 
-    public hasRecord() {
-        return this.best !== undefined;
-    }
+    public track(position: Run.Position): Record | undefined {
+        let newRecord;
 
-    public getRecord(): Record {
-        return this.best;
-    }
-
-    public track(position: Position): Tracker {
         this.queue.push(position);
         while (this.queueDistance() >= this.distance) {
             const cur = this.extractRecord();
             if (cur.isBetterThan(this.best)) {
                 this.best = cur;
+                newRecord = cur;
             }
             // move the window
             this.queue.shift();
         }
-        return this;
+
+        return newRecord;
     }
 
     private queueDistance() {

@@ -28,6 +28,7 @@
     "testRegex": "/__tests__/.*\\.(ts|tsx)$"
   },
   "devDependencies": {
+    "@types/commander": "^2.9.1",
     "@types/geolib": "^2.0.2",
     "@types/immutable": "^3.8.7",
     "@types/jest": "^20.0.1",
@@ -35,19 +36,23 @@
     "@types/node": "^8.0.0",
     "@types/pify": "^0.0.28",
     "@types/sax": "^1.0.0",
+    "@types/sprintf-js": "^0.0.27",
+    "@types/uuid": "^3.0.0",
     "@types/xml2js": "^0.0.33",
     "jest": "^20.0.4",
     "ts-jest": "^20.0.6",
+    "ts-node": "^3.1.0",
     "tslint": "^5.4.3",
-    "typescript": "^2.3.4"
+    "typescript": "^2.4.1"
   },
   "dependencies": {
+    "commander": "^2.10.0",
     "geolib": "^2.0.22",
     "immutable": "^3.8.1",
     "moment": "^2.18.1",
     "pify": "^3.0.0",
     "sax": "^1.2.2",
-    "ts-node": "^3.1.0",
-    "xml2js": "^0.4.17"
+    "sprintf-js": "^1.1.1",
+    "uuid": "^3.1.0"
   }
 }

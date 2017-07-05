@@ -8,6 +8,9 @@ class GpsPoint {
         this.longitude = longitude;
     }
     static distance(p1, p2) {
+        if (!p1) {
+            return 0;
+        }
         return geolib.getDistance(p1, p2);
     }
 }
