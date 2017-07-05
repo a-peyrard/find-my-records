@@ -16,6 +16,8 @@ interface TextMatcher<T> {
     consumer: (val: T) => void;
 }
 
+const HAILE_BEST_KM_IN_SEC = 140;
+
 export class PositionParserStream extends Transform {
 
     private saxStream: sax.SAXStream;
@@ -24,6 +26,7 @@ export class PositionParserStream extends Transform {
     private readonly runMeta: any = {};
     private currentPosition: any;
     private lastPoint: GpsPoint;
+    private lastSavedPosition: Run.Position;
     private totalDistance = 0;
     private startTime: moment.Moment;
 
@@ -47,15 +50,24 @@ export class PositionParserStream extends Transform {
                 path: ["gpx", "trk", "trkseg", "trkpt"],
                 consumer: n => {
                     const cur = new GpsPoint(n.attributes.lat, n.attributes.lon);
-                    this.totalDistance += GpsPoint.distance(this.lastPoint, cur);
+                    const distanceFromLast = GpsPoint.distance(this.lastPoint, cur);
                     this.currentPosition = {
                         runMeta: this.runMeta,
-                        distance: this.totalDistance
+                        distanceFromLast
                     };
                     this.lastPoint = cur;
                 }
             }
         );
+    }
+
+    private isNotBetterThanHaile() {
+        if (!this.lastSavedPosition) {
+            return true;
+        }
+        const metersRun = this.currentPosition.distanceFromLast;
+        const time = this.currentPosition.elapsedTime - this.lastSavedPosition.elapsedTime;
+        return time * (1000 / metersRun) > HAILE_BEST_KM_IN_SEC;
     }
 
     private onCloseTag(tagName: string) {
@@ -64,16 +76,20 @@ export class PositionParserStream extends Transform {
             {
                 path: ["gpx", "trk", "trkseg", "trkpt"],
                 consumer: () => {
-                    this.push(
-                        new Run.Position(
-                            new Run.Meta(
-                                this.runMeta.label,
-                                this.runMeta.date
-                            ),
-                            this.currentPosition.distance,
-                            this.currentPosition.elapsedTime
-                        )
-                    );
+                    if (this.isNotBetterThanHaile()) {
+                        this.totalDistance += this.currentPosition.distanceFromLast;
+                        this.push(
+                            new Run.Position(
+                                new Run.Meta(
+                                    this.runMeta.label,
+                                    this.runMeta.date
+                                ),
+                                this.totalDistance,
+                                this.currentPosition.elapsedTime
+                            )
+                        );
+                        this.lastSavedPosition = this.currentPosition;
+                    }
                     delete this.currentPosition;
                 }
             }

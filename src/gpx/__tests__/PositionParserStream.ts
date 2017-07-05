@@ -68,4 +68,24 @@ describe("PositionParseStream", () => {
             expect(fourth.runMeta.date.getTime()).toBe(moment("2017-06-19T01:21:45.000Z").valueOf());
         });
     });
+
+    it("should ignore position when better than Haile best pace", () => {
+        const sink = new PositionsSink();
+
+        return promiseStreamConsumption(
+            fs.createReadStream(GPX_FILES_PREFIX + "/gpx-files/haile.gpx")
+              .pipe(new PositionParserStream())
+              .pipe(sink)
+        ).then(() => {
+            expect(sink.positions.length).toBe(9);
+
+            const fourth = sink.positions[4];
+            expect(fourth.distance).toBe(315);
+            expect(fourth.elapsedTime).toBe(663);
+
+            const fifth = sink.positions[5];
+            expect(fifth.distance).toBe(325);
+            expect(fifth.elapsedTime).toBe(667);
+        });
+    });
 });
