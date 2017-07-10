@@ -1,4 +1,4 @@
-# Find my records
+# Find my records [![Build Status](https://travis-ci.org/a-peyrard/find-my-records.svg?branch=master)](https://travis-ci.org/a-peyrard/find-my-records)
 
 > Small project to find records in `gpx` file.
 
