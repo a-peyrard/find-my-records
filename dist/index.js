@@ -12,16 +12,20 @@ const Streams_1 = require("./util/Streams");
 const moment = require("moment");
 const stream_1 = require("stream");
 const DEFAULT_DISTANCES = immutable_1.List.of(100, 200, 400, 1000, 1609, 5000, 10000, 15000, 21097);
+const extractDistanceOption = (options) => {
+    return options.distances &&
+        immutable_1.List(options.distances.split(",").map((v) => parseInt(v, 10)));
+};
 program
     .version("0.1.3")
     .description("find run records in a gpx file")
     .usage("[options] <gpx-file...>")
-    .option('--distances <distance,...>', 'distances for records (in meter), list of distances comma separated without spaces', false)
-    .option('-s, --slow [flag]', 'slow down the broadcasting of records to the table (just for demo), default false', false)
+    .option("--distances <distance,...>", "distances for records (in meter), list of distances comma separated without spaces", false)
+    .option("-s, --slow [flag]", "slow down the broadcasting of records to the table (just for demo), default false", false)
     .arguments("<gpx-file...>")
     .action((gpxFiles, options) => {
     const start = moment();
-    const distances = options.distances && immutable_1.List(options.distances.split(",")) || DEFAULT_DISTANCES;
+    const distances = extractDistanceOption(options) || DEFAULT_DISTANCES;
     const recordTable = new ConsoleUpdatableRecordTable_1.ConsoleUpdatableRecordTable(distances, process.stdout);
     Streams_1.merge(gpxFiles.map(gpxFile => fs.createReadStream(gpxFile, { encoding: "utf8" })
         .pipe(new PositionParserStream_1.PositionParserStream())

@@ -23,17 +23,32 @@ const DEFAULT_DISTANCES: List<number> = List.of(
     21097
 );
 
+const extractDistanceOption = (options: any): List<number> | undefined => {
+    return options.distances &&
+        List<number>(
+            options.distances.split(",").map((v: string) => parseInt(v, 10))
+        );
+};
+
 program
     .version("0.1.3")
     .description("find run records in a gpx file")
     .usage("[options] <gpx-file...>")
-    .option('--distances <distance,...>', 'distances for records (in meter), list of distances comma separated without spaces', false)
-    .option('-s, --slow [flag]', 'slow down the broadcasting of records to the table (just for demo), default false', false)
+    .option(
+        "--distances <distance,...>",
+        "distances for records (in meter), list of distances comma separated without spaces",
+        false
+    )
+    .option(
+        "-s, --slow [flag]",
+        "slow down the broadcasting of records to the table (just for demo), default false",
+        false
+    )
     .arguments("<gpx-file...>")
     .action((gpxFiles: string[], options: any) => {
         const start = moment();
 
-        const distances: List<number> = options.distances && List(options.distances.split(",")) || DEFAULT_DISTANCES;
+        const distances = extractDistanceOption(options) || DEFAULT_DISTANCES;
 
         const recordTable = new ConsoleUpdatableRecordTable(distances, process.stdout);
         merge(gpxFiles.map(
